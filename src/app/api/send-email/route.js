@@ -11,16 +11,31 @@ const transporter = nodemailer.createTransport({
 });
 
 export async function POST(req) {
-  const { subject, text, to } = await req.json();
-
-  const mailOptions = {
-    from: "sender@freelance.mailtrap.link",
-    to,
-    subject,
-    text,
-  };
-
   try {
+    const formData = await req.formData();
+    const subject = formData.get("subject");
+    const text = formData.get("text");
+    const to = formData.get("to");
+    const file = formData.get("file");
+
+    const mailOptions = {
+      from: "sender@freelance.mailtrap.link",
+      to,
+      subject,
+      text,
+    };
+
+    if (file) {
+      const buffer = await file.arrayBuffer();
+      mailOptions.attachments = [
+        {
+          filename: file.name,
+          content: Buffer.from(buffer),
+          contentType: file.type,
+        },
+      ];
+    }
+
     await transporter.sendMail(mailOptions);
 
     return new Response(
